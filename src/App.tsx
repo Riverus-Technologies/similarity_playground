@@ -1,7 +1,16 @@
 import React, {useState} from 'react';
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import {Container, Row, Col, Table} from 'react-bootstrap'
+
 // @ts-ignore
 import {Corpus, Similarity} from "tiny-tfidf";
+
+type SimilarityType = {
+    sentence: string;
+    policy: string;
+    similarity: number;
+}
 
 function App() {
 
@@ -15,7 +24,7 @@ function App() {
         'This is test document 2. It is also quite short, and is a test.\n' +
         'Test document number three is a bit different and is also a tiny bit longer.'
     )
-    let [results, setResults] = useState('Results will generated here')
+    let [results, setResults] = useState<SimilarityType[]>([]);
 
     const predict = () => {
 
@@ -41,46 +50,70 @@ function App() {
         const similarity = new Similarity(corpus);
         const distance = similarity.getDistanceMatrix();
         console.log(distance);
-        results = '';
-        for (let s=0; s < ss.length; ++s) {
-            for (let p=0; p < pp.length; ++p) {
+        let results: SimilarityType[] = []
+        for (let s = 0; s < ss.length; ++s) {
+            for (let p = 0; p < pp.length; ++p) {
                 let d = distance.matrix[s][ss.length + p];
-                console.log("Similarity:");
-                console.log("---> s" + s, ":", ss[s]);
-                console.log("---> p" + p, ":", pp[p]);
-                console.log("---> distance :", (1 - d) * 100, "%");
-                results += "Similarity:\n";
-                results += ("---> s" + s + " : " + ss[s]);
-                results += ("---> p" + p + " : " + pp[p]);
-                results += ("---> distance : " + (1 - d) * 100 + "%");
+                results.push(
+                    {
+                        sentence: ss[s],
+                        policy: pp[p],
+                        similarity: ((1 - d) * 100)
+                    }
+                );
             }
         }
+        setResults([...results]);
     }
 
     return (
-        <div className="App">
-            <header className="App-header">
-                <label>Sentences : </label>
-                <textarea
-                    rows={10}
-                    cols={200}
-                    value={sentences}
-                    onChange={e => setSentences(e.target.value)}
-                />
-                <label>Policies : </label>
-                <textarea
-                    rows={10}
-                    cols={200}
-                    value={policies}
-                    onChange={e => setPolicies(e.target.value)}
-                />
-                <label>Similarity : </label>
-                <span>{results}</span>
-                <button onClick={predict}>
-                    Evaluate
-                </button>
-            </header>
-        </div>
+        <Container className="App" fluid>
+            <Row>
+                <Col md={6}>
+                    <label>Sentences : </label>
+                    <textarea
+                        rows={15}
+                        style={{width:'100%'}}
+                        value={sentences}
+                        onChange={e => setSentences(e.target.value)}
+                    />
+                    <label>Policies : </label>
+                    <textarea
+                        rows={15}
+                        style={{width:'100%'}}
+                        value={policies}
+                        onChange={e => setPolicies(e.target.value)}
+                    />
+                </Col>
+                <Col>
+                    <button onClick={predict}>
+                        Evaluate Similarity
+                    </button>
+                    <Table striped bordered hover size="sm" responsive>
+                        <thead>
+                        <tr>
+                            <td>sentence</td>
+                            <td>policy</td>
+                            <td>similarity %</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {results.map((r, i) => {
+                            return (
+                                <tr key={i}>
+                                    <td>{r.sentence}</td>
+                                    <td>{r.policy}</td>
+                                    <td>{r.similarity.toFixed(2)}</td>
+                                </tr>
+                            )
+                        })}
+                        </tbody>
+                    </Table>
+                </Col>
+            </Row>
+            {/*<header className="App-header">
+            </header>*/}
+        </Container>
     );
 }
 
